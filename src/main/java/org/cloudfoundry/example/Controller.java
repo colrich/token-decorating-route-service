@@ -57,6 +57,9 @@ final class Controller {
         String forwardedUrl = getForwardedUrl(request.getHeaders());
         HttpHeaders forwardedHttpHeaders = getForwardedHeaders(request.getHeaders());
 
+        // we add the vault token here
+        forwardedHttpHeaders.add("X-Config-Token", "2ce06f6e-67b6-bd51-c35d-52322e89656c");
+        
         this.logger.info("Outgoing Request:  {}", formatRequest(request.getMethod(), forwardedUrl, forwardedHttpHeaders));
 
         return this.webClient

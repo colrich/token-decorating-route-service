@@ -1,12 +1,15 @@
-# Cloud Foundry Route Service Example
+# Token Decorating Route Service
 
 This project is an example of a [Cloud Foundry Route Service][r] written with [Spring Boot][b].  This application does the following to each request:
 
 1. Intercepts an incoming request
 2. Logs information about that incoming request
 3. Transforms the incoming request to an outgoing request
+4. Adds a header with a vault token for the config server to use
 4. Logs information about that outgoing request
 5. Forwards the request and response
+
+Item #4 is the key to the solution; it means that the individual client apps that this service is bound in front of need not have the vault token in their environment or bootstrap.properties.
 
 ## Requirements
 ### Java, Maven
@@ -23,43 +26,19 @@ $ cf push
 
 Next, create a user provided service that contains the route service configuration information.  To do this, run the following command, substituting the address that the route service is listening on:
 ```bash
-$ cf create-user-provided-service test-route-service -r https://<ROUTE-SERVICE-ADDRESS>
+$ cf create-user-provided-service config-server-route-service -r https://<ROUTE-SERVICE-ADDRESS>
 ```
 
-The next step assumes that you have an application already running that you'd like to bind this route service to.  To do this, run the following command, substituting the domain and hostname bound to that application:
+The next step assumes that you have a config server already running that you'd like to bind this route service to.  To do this, run the following command, substituting the domain and hostname bound to that config server:
 ```bash
-$ cf bind-route-service <APPLICATION-DOMAIN> test-route-service --hostname <APPLICATION-HOST>
+$ cf bind-route-service <APPLICATION-DOMAIN> config-server-route-service --hostname <APPLICATION-HOST>
 ```
 
-In order to view the interception of the requests, you will need to stream the logs of the route service.  To do this, run the following command:
+In order to view the interception and decoration of the requests, you will need to stream the logs of the route service.  To do this, run the following command:
 ```bash
-$ cf logs route-service-example
+$ cf logs token-decorator
 ```
 
-Finally, start making requests against your test application.  The route service's logs should start returning results that look similar to the following:
-```text
-INFO  Incoming Request:  PATCH http://localhost/route-service/patch, {WebTestClient-Request-Id=[1], X-CF-Forwarded-Url=[http://localhost:51751/original/patch], X-CF-Proxy-Metadata=[test-proxy-metadata], X-CF-Proxy-Signature=[test-proxy-signature], Content-Type=[text/plain;charset=UTF-8], Content-Length=[9]}
-INFO  Outgoing Request:  PATCH http://localhost:51751/original/patch, {WebTestClient-Request-Id=[1], X-CF-Proxy-Metadata=[test-proxy-metadata], X-CF-Proxy-Signature=[test-proxy-signature], Content-Type=[text/plain;charset=UTF-8], Content-Length=[9]}
-INFO  Outgoing Response: 200, {Content-Type=[text/plain], Content-Length=[9]}
-INFO  Incoming Request:  DELETE http://localhost/route-service/delete, {WebTestClient-Request-Id=[1], X-CF-Forwarded-Url=[http://localhost:51755/original/delete], X-CF-Proxy-Metadata=[test-proxy-metadata], X-CF-Proxy-Signature=[test-proxy-signature]}
-INFO  Outgoing Request:  DELETE http://localhost:51755/original/delete, {WebTestClient-Request-Id=[1], X-CF-Proxy-Metadata=[test-proxy-metadata], X-CF-Proxy-Signature=[test-proxy-signature]}
-INFO  Outgoing Response: 200, {Content-Length=[0]}
-INFO  Incoming Request:  HEAD http://localhost/route-service/head, {WebTestClient-Request-Id=[1], X-CF-Forwarded-Url=[http://localhost:51757/original/head], X-CF-Proxy-Metadata=[test-proxy-metadata], X-CF-Proxy-Signature=[test-proxy-signature]}
-INFO  Outgoing Request:  HEAD http://localhost:51757/original/head, {WebTestClient-Request-Id=[1], X-CF-Proxy-Metadata=[test-proxy-metadata], X-CF-Proxy-Signature=[test-proxy-signature]}
-INFO  Outgoing Response: 200, {Content-Length=[0]}
-INFO  Incoming Request:  PUT http://localhost/route-service/put, {WebTestClient-Request-Id=[1], X-CF-Forwarded-Url=[http://localhost:51759/original/put], X-CF-Proxy-Metadata=[test-proxy-metadata], X-CF-Proxy-Signature=[test-proxy-signature], Content-Type=[text/plain;charset=UTF-8], Content-Length=[9]}
-INFO  Outgoing Request:  PUT http://localhost:51759/original/put, {WebTestClient-Request-Id=[1], X-CF-Proxy-Metadata=[test-proxy-metadata], X-CF-Proxy-Signature=[test-proxy-signature], Content-Type=[text/plain;charset=UTF-8], Content-Length=[9]}
-INFO  Outgoing Response: 200, {Content-Type=[text/plain], Content-Length=[9]}
-INFO  Incoming Request:  POST http://localhost/route-service/post, {WebTestClient-Request-Id=[1], X-CF-Forwarded-Url=[http://localhost:51761/original/post], X-CF-Proxy-Metadata=[test-proxy-metadata], X-CF-Proxy-Signature=[test-proxy-signature], Content-Type=[text/plain;charset=UTF-8], Content-Length=[9]}
-INFO  Outgoing Request:  POST http://localhost:51761/original/post, {WebTestClient-Request-Id=[1], X-CF-Proxy-Metadata=[test-proxy-metadata], X-CF-Proxy-Signature=[test-proxy-signature], Content-Type=[text/plain;charset=UTF-8], Content-Length=[9]}
-INFO  Outgoing Response: 200, {Content-Type=[text/plain], Content-Length=[9]}
-INFO  Incoming Request:  GET http://localhost/route-service/get, {WebTestClient-Request-Id=[1], X-CF-Forwarded-Url=[http://localhost:51763/original/get], X-CF-Proxy-Metadata=[test-proxy-metadata], X-CF-Proxy-Signature=[test-proxy-signature]}
-INFO  Outgoing Request:  GET http://localhost:51763/original/get, {WebTestClient-Request-Id=[1], X-CF-Proxy-Metadata=[test-proxy-metadata], X-CF-Proxy-Signature=[test-proxy-signature]}
-INFO  Outgoing Response: 200, {Content-Type=[text/plain], Content-Length=[9]}
-```
-
-## Developing
-The project is set up as a Maven project and doesn't have any special requirements beyond that. It has been created using [IntelliJ][j] and contains configuration information for that environment, but should work with other IDEs.
 
 
 ## License
