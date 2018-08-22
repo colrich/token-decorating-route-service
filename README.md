@@ -9,7 +9,7 @@ This project is an example of a [Cloud Foundry Route Service][r] written with [S
 4. Logs information about that outgoing request
 5. Forwards the request and response
 
-Item #4 is the key to the solution; it means that the individual client apps that this service is bound in front of need not have the vault token in their environment or bootstrap.properties.
+Item #4 is the key to the solution; it means that the individual client apps that use the config server that this service is bound in front of need not have the vault token in their environment or bootstrap.properties.
 
 ## Requirements
 ### Java, Maven
